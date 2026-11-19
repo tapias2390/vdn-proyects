@@ -1,0 +1,47 @@
+# Vitrina de Proyectos · reglas del servidor (Apache o LiteSpeed)
+
+Options -Indexes
+DirectoryIndex index.php
+
+# Archivos que nunca se entregan por el navegador:
+# ocultos (.env con las contraseñas, .htaccess, .user.ini, .git...), copias y bases sueltas.
+<FilesMatch "(^\.|^config\.php$|^config\.ejemplo\.php$|^LEEME\.txt$|\.(sqlite|sqlite3|db|sql|log|bak|old|orig|swp|tmp|lock|zip|ini)$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  # El sitio principal (public_html) envía una Content-Security-Policy estricta que
+  # bloquea Google Fonts y la vista previa de los proyectos. Se anula solo para la
+  # página del panel; api.php conserva la suya.
+  <FilesMatch "^index\.php$">
+    Header always unset Content-Security-Policy
+    Header unset Content-Security-Policy
+    Header always unset Content-Security-Policy-Report-Only
+    Header unset Content-Security-Policy-Report-Only
+  </FilesMatch>
+  Header always unset X-Powered-By
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "same-origin"
+  <FilesMatch "\.php$">
+    Header always set X-Frame-Options "SAMEORIGIN"
+  </FilesMatch>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+# Obliga HTTPS (las contraseñas y la cookie de sesión viajan cifradas).
+# No aplica en localhost para poder probar en XAMPP.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:\d+)?$ [NC]
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>

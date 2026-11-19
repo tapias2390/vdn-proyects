@@ -1,0 +1,125 @@
+VITRINA DE PROYECTOS · VDN VALUE
+================================
+
+Panel para subir proyectos HTML en .zip, verlos en vivo, dejar notas
+y llevar el estado, las horas y el encargado de cada proyecto.
+Funciona con PHP y MySQL en el hosting de mi.com.co (cPanel).
+
+
+REQUISITOS
+----------
+- PHP 7.3 o superior (mejor 8.1 o más nuevo) con la extensión pdo_mysql.
+- Una base de datos MySQL o MariaDB.
+- Recomendado: certificado SSL (HTTPS).
+
+
+INSTALACIÓN (unos 10 minutos)
+-----------------------------
+1. Entra al cPanel de tu hosting en mi.com.co.
+
+2. Abre "Bases de datos MySQL" (o el "Asistente de bases de datos MySQL").
+   - Crea una base de datos. Por ejemplo: vitrina
+   - Crea un usuario con una contraseña segura.
+   - Agrega el usuario a la base y marca "TODOS LOS PRIVILEGIOS".
+   - Anota los nombres completos. cPanel les pone el prefijo de tu cuenta,
+     por ejemplo: micuenta_vitrina
+
+3. Abre el "Administrador de archivos" y entra a public_html.
+
+4. Sube vitrina-vdnvalue.zip. Clic derecho sobre el archivo → "Extract" (Extraer).
+   Se crea la carpeta public_html/vitrina. Después puedes borrar el .zip.
+
+5. En el navegador abre:  https://tudominio.com/vitrina/instalar.php
+   - Escribe el servidor (localhost), la base de datos, el usuario y la contraseña de MySQL.
+   - Revisa las contraseñas del equipo. Puedes cambiarlas ahí.
+   - Pulsa "Instalar".
+
+6. Copia los accesos que aparecen. No se vuelven a mostrar.
+
+7. Borra el archivo instalar.php desde el Administrador de archivos.
+
+8. Entra al panel:  https://tudominio.com/vitrina/  (abre index.php)
+
+Nota: los archivos que empiezan con punto (.htaccess, .user.ini) están ocultos
+en el Administrador de archivos. Para verlos: Configuración → Mostrar archivos ocultos.
+
+
+ACTUALIZAR (si ya tenías el panel instalado)
+--------------------------------------------
+1. En el Administrador de archivos, entra a public_html/vitrina.
+2. Borra el index.html viejo si existe. Sube los archivos nuevos (index.php, api.php, instalar.php si lo necesitas, .htaccess
+   y las carpetas app/, assets/ y config/) y reemplaza los anteriores.
+3. No borres .env (o config.php si tu instalación es antigua) ni la carpeta datos/.
+   Ahí están la conexión y los archivos. Un config.php antiguo sigue funcionando;
+   si quieres pasarlo a .env, copia .env.example como .env, pon los mismos datos
+   y borra config.php.
+4. Recarga el panel en el navegador.
+Proyectos, notas, horas y contraseñas se conservan.
+
+
+USUARIOS
+--------
+david, oscar, nicolas, yhonatan, alejandro.
+David y Nicolas quedan como administradores (se puede cambiar al instalar).
+Los administradores restablecen contraseñas y eliminan proyectos.
+Cada persona cambia su contraseña desde su nombre, arriba a la derecha.
+
+
+DÓNDE SE GUARDA TODO
+--------------------
+- Proyectos, notas, horas, estados y accesos: tablas vt_ de la base MySQL.
+- Archivos de los .zip: carpeta datos/archivos. Está protegida: solo se ven entrando al panel.
+- Datos de conexión y de seguridad: archivo .env. No lo compartas.
+  El servidor no lo entrega por el navegador (lo bloquea .htaccess).
+- Cada archivo del .zip puede pesar hasta 50 MB. Se cambia en .env (UPLOAD_MAX_MB).
+- También en .env: cookie y días de la sesión, intentos de acceso y minutos de bloqueo.
+- Si dos versiones tienen archivos iguales, se guardan una sola vez.
+
+
+COPIA DE SEGURIDAD
+------------------
+- Base de datos: phpMyAdmin → elige la base → Exportar → Rápido → SQL.
+- Archivos: comprime la carpeta datos/ en el Administrador de archivos y descárgala.
+
+
+PROBLEMAS COMUNES
+-----------------
+- "No se pudo conectar con MySQL": revisa el nombre completo (con prefijo) de la base
+  y del usuario, y que el usuario tenga todos los privilegios sobre esa base.
+- Error 500 al abrir el panel: borra la línea "Options -Indexes" del archivo .htaccess.
+- Error 403 al subir un .zip o al guardar una nota: es el firewall del hosting (ModSecurity).
+  Pide a soporte de mi.com.co que lo ajuste para la carpeta vitrina,
+  o desactívalo para tu dominio en cPanel → ModSecurity.
+- "PHP no puede escribir en datos": dale permisos 755 a la carpeta datos y a sus subcarpetas.
+- HTTPS: el .htaccess obliga HTTPS (menos en localhost). Activa el certificado SSL
+  gratuito en cPanel; sin certificado el panel no abrirá.
+- El instalador solo acepta una base de datos en localhost. Si tu MySQL está en otro
+  servidor, cambia VT_SOLO_BD_LOCAL a false al principio de instalar.php.
+- Olvidaste las contraseñas / reinstalar: borra solo datos/instalado.lock (deja el .env),
+  vuelve a subir instalar.php y ábrelo. Te pide la contraseña de MySQL del .env.
+  Los proyectos se conservan; las contraseñas se reemplazan.
+
+
+ARCHIVOS
+--------
+index.php            El panel (vista). Su diseño y su código están en assets/.
+assets/css/app.css   Estilos del panel.
+assets/js/app.js     Código del panel en el navegador.
+api.php              Punto de entrada del servidor. Pasa cada acción a su controlador.
+instalar.php         El instalador. Bórralo después de instalar.
+.env                 Contraseñas y ajustes de seguridad. Lo crea instalar.php. (protegido)
+.env.example         Ejemplo del .env para hacerlo a mano. (protegido)
+config/app.php       Lee el .env y define los valores por defecto. (protegida)
+app/                 El servidor, separado en MVC. (protegida)
+  bootstrap.php        Arranque: rutas y carga automática de clases.
+  rutas.php            Lista de acciones: api.php?accion=... -> Controlador.
+  Core/                Núcleo: .env, configuración, base de datos, petición, respuesta.
+  Models/              Una clase por tabla vt_* (Proyecto, Version, Nota, Tiempo...).
+  Controllers/         Una clase por área (Sesion, Datos, Proyecto, Version, Archivo,
+                       Nota, Tiempo).
+  Services/Auth.php    Inicio de sesión y permisos.
+  Install/             Funciones del instalador.
+  Views/instalar.php   Página del instalador.
+.htaccess            Reglas de seguridad para Apache o LiteSpeed.
+.user.ini            Ajustes de PHP para los envíos.
+datos/               Archivos de los proyectos. (protegida)
